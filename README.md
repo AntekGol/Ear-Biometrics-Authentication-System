@@ -1,0 +1,1 @@
+Wykonany system wykorzystuje głębokie sieci neuronowe, by na podstawie biometrii ucha osoby, dodać ją do bazy danych lub uwierzytelnić jej dostęp do istniejącego konta. Wykonane zostały: aplikacja desktopowa, struktura sieci syjamskich, dwa modele głębokich sieci neuronowych, skrypt augmentujący zdjęcia do treningu.
