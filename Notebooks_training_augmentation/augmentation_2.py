@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import random
-#skalowanie obrazu z zachowaniem proporcji
+#Scale image maintaining aspect ratio
 def resize_with_padding(image, target_size=(224, 224)):
     old_size = image.shape[:2]
     ratio = min(target_size[0]/old_size[0], target_size[1]/old_size[1])
@@ -18,7 +18,7 @@ def resize_with_padding(image, target_size=(224, 224)):
     color = [0, 0, 0]
     new_image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
     return new_image
-#wymazywanie losowych pikseli
+#Erase random pixels
 def random_erasing(image, max_rects=3):
     h, w = image.shape[:2]
     erased = image.copy()
@@ -33,47 +33,47 @@ def random_erasing(image, max_rects=3):
 def augment_image(image):
     augmented_images = []
 
-    # Oryginalne
+    # Original
     augmented_images.append(image)
 
-    # Kolor mono
+    # Monochrome
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
     augmented_images.append(gray)
 
-    # Obrót -20 do -5 stopni
+    # Rotate -20 to -5 degrees
     rows, cols = image.shape[:2]
     kat_lewo = random.uniform(-20, -5)
     M_left = cv2.getRotationMatrix2D((cols/2, rows/2), kat_lewo, 1)
     rotated_left = cv2.warpAffine(image, M_left, (cols, rows))
     augmented_images.append(rotated_left)
 
-    # Obrót +5 do +20 stopni
+    # Rotate +5 to +20 degrees
     kat_prawo = random.uniform(5, 20)
     M_right = cv2.getRotationMatrix2D((cols/2, rows/2), kat_prawo, 1)
     rotated_right = cv2.warpAffine(image, M_right, (cols, rows))
     augmented_images.append(rotated_right)
 
-    # Noise (gauss)
+    # Noise (Gaussian)
     noise = np.random.randint(-35, 36, image.shape)
     noisy_image = np.clip(image + noise, 0, 255).astype(np.uint8)
     augmented_images.append(noisy_image)
 
-    # Blur (gauss)
+    # Blur (Gaussian)
     blurred = cv2.blur(image, (15, 15))
     augmented_images.append(blurred)
 
-    # Jasność większa
+    # Increase brightness
     bw = random.uniform(1.35, 1.45)
     bright = cv2.convertScaleAbs(image, bw, beta=30)
     augmented_images.append(bright)
 
-    # Jasność mniejsza
+    # Decrease brightness
     bm = random.uniform(0.2, 0.3)
     dark = cv2.convertScaleAbs(image, bm, beta=-30)
     augmented_images.append(dark)
 
-    # Saturacja zmieniona (mocniej i słabiej)
+    # Change saturation (stronger and weaker)
     sm = random.uniform(0.3, 0.6)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV).astype(np.float32)
     hsv[:, :, 1] = np.clip(hsv[:, :, 1] * sm, 0, 255)
@@ -86,7 +86,7 @@ def augment_image(image):
     sat_high = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
     augmented_images.append(sat_high)
 
-    # Random erasing (3 wersje)
+    # Random erasing (3 versions)
     for _ in range(3):
         erased = random_erasing(image)
         augmented_images.append(erased)
@@ -95,11 +95,11 @@ def augment_image(image):
     # Zoom
     zoom_factor = random.uniform(0.7, 0.9)
     h, w = image.shape[:2]
-    # Skalowanie obrazu
+    # Scale image
     zoomed = cv2.resize(image, None, fx=zoom_factor, fy=zoom_factor)
     zh, zw = zoomed.shape[:2]
 
-    # Padding - dopasowanie do 224x224
+    # Padding - fit to 224x224
     pad_top = (h - zh) // 2
     pad_bottom = h - zh - pad_top
     pad_left = (w - zw) // 2
@@ -109,7 +109,7 @@ def augment_image(image):
 
     augmented_images.append(zoomed)
 
-    # (odbicie lustrzane poziome)
+    # Horizontal flip
     flipped = cv2.flip(image, 1)
     augmented_images.append(flipped)
 

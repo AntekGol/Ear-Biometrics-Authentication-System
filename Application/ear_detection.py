@@ -1,7 +1,7 @@
 import cv2
 from ultralytics import YOLO
 
-#Leniwe ładowanie modelu
+#Lazy model loading
 _model = None
 
 
@@ -29,15 +29,15 @@ def detect_and_display_ear(frame):
                 width = x2 - x1
                 height = y2 - y1
 
-                # Rysowanie bounding box
+                # Draw bounding box
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 label = f"Ucho: {conf:.2f}, Rozmiar: {width}x{height}"
                 cv2.putText(display_frame, label, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                # Sprawdzanie minimalnego rozmiaru
+                # Check minimum size
                 if width >= 160 and height >= 210:
-                    # Wycinanie ucha
+                    # Crop the ear
                     ear_found = frame[y1:y2, x1:x2]
 
     return display_frame, ear_found

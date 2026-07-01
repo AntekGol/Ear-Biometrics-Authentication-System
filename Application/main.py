@@ -13,10 +13,10 @@ from database import (
 from embedding_generator import generate_embedding, compare_embeddings
 
 
-# Wątek odpowiedzialny za obsługę kamery oraz detekcję ucha w czasie rzeczywistym
+# Thread responsible for camera handling and real-time ear detection
 class CameraThread(QThread):
-    frame_signal = pyqtSignal(np.ndarray)     # Sygnał do przekazania klatki do GUI
-    ear_detected = pyqtSignal(np.ndarray)     # Sygnał wykrycia ucha
+    frame_signal = pyqtSignal(np.ndarray)     # Signal to pass the frame to GUI
+    ear_detected = pyqtSignal(np.ndarray)     # Ear detection signal
 
     def __init__(self, detection_active=False):
         super().__init__()
@@ -24,7 +24,7 @@ class CameraThread(QThread):
         self.running = True
 
     def set_detection_active(self, active):
-        # Włączanie / wyłączanie trybu detekcji ucha
+        # Enable / disable ear detection mode
         self.detection_active = active
 
     def stop(self):
@@ -44,7 +44,7 @@ class CameraThread(QThread):
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             if self.detection_active:
-                # Próbujemy wykryć ucho na klatce
+                # Attempt to detect ear in the frame
                 display_frame, ear = detect_and_display_ear(frame_rgb)
                 self.frame_signal.emit(display_frame)
                 if ear is not None:
@@ -55,7 +55,7 @@ class CameraThread(QThread):
         cap.release()
 
 
-# Okno rejestracji użytkownika
+# User registration window
 class RegisterWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -87,7 +87,7 @@ class RegisterWindow(QDialog):
         self.camera_window.exec_()
 
 
-# Okno logowania użytkownika
+# User login window
 class LoginWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -125,7 +125,7 @@ class LoginWindow(QDialog):
         self.camera_window.exec_()
 
 
-# Główne okno obsługujące proces kamery, detekcji oraz uwierzytelniania
+# Main window handling the camera, detection, and authentication processes
 class CameraWindow(QDialog):
     def __init__(self, mode, username, parent=None):
         super().__init__(parent)
@@ -136,16 +136,16 @@ class CameraWindow(QDialog):
         self.setWindowTitle("Weryfikacja ucha")
         self.setFixedSize(1000, 700)
 
-        # Główne layouty
+        # Main layouts
         main_layout = QVBoxLayout()
         image_layout = QHBoxLayout()
 
-        # Podgląd z kamery
+        # Camera preview
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setMinimumSize(640, 480)
 
-        # Podgląd wykrytego ucha
+        # Detected ear preview
         self.ear_label = QLabel("Wykryte ucho pojawi się tutaj")
         self.ear_label.setAlignment(Qt.AlignCenter)
         self.ear_label.setMinimumSize(224, 224)
@@ -154,7 +154,7 @@ class CameraWindow(QDialog):
         image_layout.addWidget(self.camera_label)
         image_layout.addWidget(self.ear_label)
 
-        # Przycisk akceptacji lub odrzucenia wykrytego ucha
+        # Button to accept or reject the detected ear
         self.btn_accept = QPushButton("Akceptuj")
         self.btn_reject = QPushButton("Odrzuć")
         self.btn_accept.setVisible(False)
@@ -175,7 +175,7 @@ class CameraWindow(QDialog):
         self.btn_accept.clicked.connect(self.accept_ear)
         self.btn_reject.clicked.connect(self.reject_ear)
 
-        # Timer odliczający przed detekcją
+        # Countdown timer before detection
         self.countdown = 10
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
@@ -200,7 +200,7 @@ class CameraWindow(QDialog):
             self.status_label.setText("Wykrywanie ucha...")
 
     def update_frame(self, frame):
-        # Aktualizacja podglądu z kamery
+        # Update camera preview
         h, w, ch = frame.shape
         q_img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
         self.camera_label.setPixmap(QPixmap.fromImage(q_img).scaled(
@@ -208,7 +208,7 @@ class CameraWindow(QDialog):
         ))
 
     def ear_detected(self, ear_img):
-        # Detekcja ucha zakończona sukcesem
+        # Ear detection successful
         self.camera_thread.set_detection_active(False)
         self.ear_img = ear_img.copy()
 
@@ -222,7 +222,7 @@ class CameraWindow(QDialog):
         self.status_label.setText("Sprawdź obraz i zaakceptuj jeśli ucho jest dobrze widoczne.")
 
     def accept_ear(self):
-        # Przetwarzanie ucha po akceptacji
+        # Processing the ear after acceptance
         self.btn_accept.setVisible(False)
         self.btn_reject.setVisible(False)
         self.status_label.setText("Przetwarzanie...")
@@ -256,7 +256,7 @@ class CameraWindow(QDialog):
             self.reject()
 
     def reject_ear(self):
-        # Użytkownik nie zaakceptował wykrytego ucha
+        # User rejected the detected ear
         self.btn_accept.setVisible(False)
         self.btn_reject.setVisible(False)
         self.ear_label.clear()
@@ -267,14 +267,14 @@ class CameraWindow(QDialog):
         self.camera_thread.set_detection_active(False)
 
     def closeEvent(self, event):
-        # Zatrzymanie wątku kamery przy zamknięciu okna
+        # Stop camera thread on window close
         self.camera_thread.stop()
         self.camera_thread.quit()
         self.camera_thread.wait(1000)
         event.accept()
 
 
-# Główne okno aplikacji
+# Main application window
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
         dlg.exec_()
 
 
-# Sprawdzenie czy kamera działa
+# Check if camera is working
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     QMessageBox.critical(None, "Błąd", "Nie można otworzyć kamery!")

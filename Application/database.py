@@ -4,26 +4,26 @@ from cryptography.fernet import Fernet
 import logging
 from datetime import datetime, timedelta
 
-# Konfiguracja logowania
+# Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Konfiguracja połączenia z bazą danych
+# Database connection configuration
 DB_HOST = "localhost"
 DB_NAME = "ear_db"
 DB_USER = "postgres"
 DB_PASSWORD = "post"
 DB_PORT = "5432"
 
-# Generowanie klucza: Fernet.generate_key()
+# Key generation: Fernet.generate_key()
 FERNET_KEY = b'tz8Uj8J4SvZ7xzw9-OrPJQHPNP-UJKyfnX1GlkXvaaU='
 
 
 def encrypt_embedding(embedding):
-    #Szyfruje embedding do formatu binarnego
+    #Encrypt embedding to binary format
     try:
         fernet = Fernet(FERNET_KEY)
-        # Konwersja embeddingu do bajtów
+        # Convert embedding to bytes
         embedding_bytes = embedding.tobytes()
         return fernet.encrypt(embedding_bytes)
     except Exception as e:
@@ -32,12 +32,12 @@ def encrypt_embedding(embedding):
 
 
 def decrypt_embedding(encrypted):
-    #Deszyfruje embedding z formatu binarnego
+    #Decrypt embedding from binary format
     try:
         fernet = Fernet(FERNET_KEY)
-        # Deszyfrowanie do bajtów
+        # Decrypt to bytes
         decrypted_bytes = fernet.decrypt(bytes(encrypted))
-        # Konwersja z powrotem do numpy array
+        # Convert back to numpy array
         return np.frombuffer(decrypted_bytes, dtype=np.float32)
     except Exception as e:
         logger.error(f"Błąd deszyfrowania: {e}")
@@ -45,7 +45,7 @@ def decrypt_embedding(encrypted):
 
 
 def init_db():
-    #Inicjalizuje połączenie z bazą danych i tworzy tabelę
+    #Initialize database connection and create table
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -71,7 +71,7 @@ def init_db():
 
 
 def save_user(username, embedding):
-    """Zapisuje użytkownika do bazy danych"""
+    """Save user to the database"""
     try:
         encrypted = encrypt_embedding(embedding)
         conn = psycopg2.connect(
@@ -93,7 +93,7 @@ def save_user(username, embedding):
 
 
 def get_user_embedding(username):
-    """Pobiera embedding użytkownika z bazy danych"""
+    """Retrieve user embedding from the database"""
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -106,7 +106,7 @@ def get_user_embedding(username):
         conn.close()
 
         if result:
-            # Konwersja na bajty jeśli to konieczne
+            # Convert to bytes if necessary
             encrypted_data = result[0]
             if isinstance(encrypted_data, memoryview):
                 encrypted_data = encrypted_data.tobytes()
@@ -120,7 +120,7 @@ def get_user_embedding(username):
 
 
 def user_exists(username):
-    #Sprawdza czy użytkownik istnieje w bazie
+    #Check if user exists in the database
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -138,7 +138,7 @@ def user_exists(username):
 
 
 def increment_failed_attempts(username):
-    #Zwiększa licznik nieudanych prób logowania
+    #Increment the failed login attempts counter
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -146,7 +146,7 @@ def increment_failed_attempts(username):
         )
         cur = conn.cursor()
 
-        # Zwiększ licznik nieudanych prób
+        # Increment failed attempts counter
         cur.execute("""
             UPDATE users 
             SET failed_attempts = failed_attempts + 1 
@@ -156,7 +156,7 @@ def increment_failed_attempts(username):
 
         result = cur.fetchone()
         if result and result[0] >= 3:
-            # Ustaw blokadę na 5 minut
+            # Set lockout for 5 minutes
             lockout_time = datetime.now() + timedelta(minutes=5)
             cur.execute("""
                 UPDATE users 
@@ -174,7 +174,7 @@ def increment_failed_attempts(username):
 
 
 def reset_failed_attempts(username):
-    #Resetuje licznik nieudanych prób
+    #Reset the failed attempts counter
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -196,7 +196,7 @@ def reset_failed_attempts(username):
 
 
 def is_account_locked(username):
-    #Sprawdza czy konto jest zablokowane
+    #Check if account is locked
     try:
         conn = psycopg2.connect(
             host=DB_HOST, dbname=DB_NAME,
@@ -223,7 +223,7 @@ def is_account_locked(username):
         return False
 
 
-#Inicjalizacja przy pierwszym uruchomieniu
+#Initialization on first run
 try:
     init_db()
 except:

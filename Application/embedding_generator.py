@@ -7,7 +7,7 @@ MODEL_PATH = 'ear_authentication_model2.h5'
 TARGET_SIZE = (224, 224)
 
 
-# Warstwa normalizująca wektor embeddingowy do długości 1 (L2 norma)
+# Layer normalizing the embedding vector to length 1 (L2 norm)
 class L2Normalization(tf.keras.layers.Layer):
     def call(self, inputs):
         return tf.math.l2_normalize(inputs, axis=-1)
@@ -15,7 +15,7 @@ class L2Normalization(tf.keras.layers.Layer):
 
 def resize_with_padding(image, target_size=TARGET_SIZE):
 
-    #Skalowanie obrazu do rozmiaru modelu z zachowaniem proporcji i dopełnieniem czarnym tłem
+    #Scale image to model size maintaining aspect ratio with black padding
 
     h, w = image.shape[:2]
     scale = min(target_size[0] / h, target_size[1] / w)
@@ -34,7 +34,7 @@ def resize_with_padding(image, target_size=TARGET_SIZE):
 
 def preprocess_for_embedding(image_bgr):
 
-    #Przygotowanie obrazu BGR do wejścia w model:konwersja kolorów, resize + padding, skalowanie i normalizacja
+    #Prepare BGR image for model input: color conversion, resize + padding, scaling and normalization
 
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     image_resized = resize_with_padding(image_rgb)
@@ -46,7 +46,7 @@ def preprocess_for_embedding(image_bgr):
 
 def generate_embedding(image_bgr):
 
-    #Generowanie embeddingu przy użyciu wytrenowanego modelu. Zwraca: wektor 1D
+    #Generate embedding using the trained model. Returns: 1D vector
 
     model = tf.keras.models.load_model(
         MODEL_PATH,
@@ -60,6 +60,6 @@ def generate_embedding(image_bgr):
 
 def compare_embeddings(emb1, emb2, threshold=0.70):
 
-    #Porównuje dwa embeddingi przy pomocy odległości euklidesowej
+    #Compare two embeddings using Euclidean distance
     distance = np.linalg.norm(emb1 - emb2)
     return (distance <= threshold), distance
